@@ -1,4 +1,6 @@
 
+#wouldntwork
+from game.events import *
 import game.location as location
 from game.locations import *
 from game.events import *
@@ -51,7 +53,7 @@ class World (context.Context):
         self.locs[self.startx+1][self.starty] = whirl
 
         #Test island: always start off next to a test island. Swap in your island to test yours.
-        testland = island.Island (self.startx, self.starty+1, self)
+        testland = alexisland2.Alex (self.startx, self.starty+1, self)
         self.locs[self.startx][self.starty+1] = testland
 
         # Peaceful island directly to the right of the spawning location.

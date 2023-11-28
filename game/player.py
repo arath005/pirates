@@ -10,6 +10,7 @@ import game.items as items
 import sys
 import datetime
 import random
+from game.notebook import AlphabetNotebook
 
 class Player (Context):
 
@@ -59,6 +60,7 @@ class Player (Context):
         self.verbs['inventory'] = self
         self.verbs['restock'] = self
         self.verbs['skills'] = self
+        self.verbs['notebook'] = self
 
         self.seen = []
         for i in range (0, self.world.worldsize):
@@ -89,9 +91,64 @@ class Player (Context):
                 config.the_player = jsonpickle.decode (s)
                 self.go = True
 
+    def Notebook(self):
+        my_alphabet_notebook = AlphabetNotebook()
+        b = False
+        a = True
+
+        while a == True:
+            print("1. Continue Adventure")
+            print("2. Open Alphabet Notebook")
+                
+
+            player_choice = input("Enter your choice (1-2): ")
+
+            if player_choice == "1":
+
+                a = False
+                b = False
+                notebook_choice = 0
+                break
+            elif player_choice == "2":
+
+                b = True
+
+                if b == True:
+                    print("\nAlphabet Notebook Menu:")
+                    print("1. Add a Note")
+                    print("2. View Notes")
+                    print("3. Edit a Note")
+                    print("4. Exit Notebook")
+
+                    
+            else:
+                print("Invalid choice. Please enter a number between 1 and 2.")
+
+            if b == True:
+                notebook_choice = input("Enter your choice (1-4): ")
+
+            if notebook_choice == "1":
+                letter = input("Enter the letter to add a note: ").upper()
+                content = input("Enter the note content: ")
+                my_alphabet_notebook.add_note(letter, content)
+            elif notebook_choice == "2":
+                my_alphabet_notebook.view_notes()
+            elif notebook_choice == "3":
+                letter = input("Enter the letter to edit the note: ").upper()
+                new_content = input("Enter the new content: ")
+                my_alphabet_notebook.edit_note(letter, new_content)
+            elif notebook_choice == "4":
+
+                b = False
+                print("Closing the Alphabet Notebook.")
+            else:
+                print("Invalid choice. Please enter a number between 1 and 4.")
+                
     def process_verb (self, verb, cmd_list, nouns):
         if (verb == "quit"):
             sys.exit(0)
+        elif (verb == "notebook"):
+            self.Notebook()
         elif (verb == "map"):
             self.print_map ()
         elif (verb == "inventory"):

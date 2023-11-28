@@ -12,7 +12,7 @@ class CrewMate(Context, superclasses.CombatCritter):
     '''Describes a pirate crewmate. The player controls these.'''
 
     # possible_names = ['alice', 'bob', 'charlie', 'darren', 'eliza', 'francine', 'gale', 'hope']
-    possible_names = ['Anne', 'Bartholomew', 'Benjamin', 'Po', 'Eliza', 'Edward', 'Grace', 'Henry', 'Mary', 'Paulsgrave', 'Jack', 'Turgut', 'William', 'Sayyida', 'Emanuel', 'Peter', 'Richard', 'Yang']
+    possible_names = ['Anne', 'Barthol', 'Benjamin', 'Po', 'Eliza', 'Edward', 'Grace', 'Henry', 'Mary', 'Paulsgraw', 'Jack', 'Turgut', 'William', 'Sayyida', 'Emanuel', 'Peter', 'Richard', 'Yang']
     longest_name = max([len(c) for c in possible_names] )
 
     def __init__ (self):
@@ -31,6 +31,7 @@ class CrewMate(Context, superclasses.CombatCritter):
         self.skills["guns"] = random.randrange(10,101)
         self.skills["cannons"] = random.randrange(10,101)
         self.skills["swimming"] = random.randrange(10,101)
+        self.skills["magic"] = random.randrange(10,101)
 
         #list of equipped items. Currently only used in combat.
         self.items = []

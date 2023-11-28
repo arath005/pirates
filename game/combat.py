@@ -67,6 +67,21 @@ class Monster(superclasses.CombatCritter):
             attack = superclasses.Attack(key, self.attacks[key][0], self.attacks[key][1], self.attacks[key][2], False)
             attacks.append(superclasses.CombatAction(attack.name, attack, self))
         return attacks
+    
+    def display_health(self):
+        print(f"{self.name}'s health: {self.hp}")
+
+    def take_damage(self, damage):
+        super().take_damage(damage)
+        self.display_health()
+
+    def heal(self, amount):
+        self.hp += amount
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
+        print(f"{self.name} healed for {amount} health.")
+        self.display_health()
+
 
     def pickAction(self):
         attacks = self.getAttacks()
@@ -87,3 +102,72 @@ class Drowned(Monster):
         attacks["punch 2"] = ["punches",random.randrange(35,51), (1,10)]
         #7 to 19 hp, bite attack, 65 to 85 speed (100 is "normal")
         super().__init__(name, random.randrange(7,20), attacks, 75 + random.randrange(-10,11))
+
+class Guardian(Monster):
+    def __init__ (self, name):
+        attacks = {}
+        attacks["slap"] = ["slaps",75, (10,20)]
+        attacks["punch 1"] = ["punches",75, (10,20)]
+        attacks["punch 2"] = ["punches",75, (10,20)]
+        #7 to 19 hp, bite attack, 65 to 85 speed (100 is "normal")
+        super().__init__(name, random.randrange(100,150), attacks, 65 + random.randrange(-10,11))
+class Keeper(Monster):
+    def __init__ (self, name):
+        attacks = self.choose_attacks()
+        super().__init__(name, random.randrange(250,350), attacks, 150 + random.randrange(-10,11))
+
+    def choose_attacks(self):
+        attacks = {}
+        
+        if 300 >= self.hp:
+            attacks["static shock"] = ["shocks", 100, (5, 10)]
+        elif 75 <= self.hp < 300:
+            attacks["jab"] = ["jabs", 75, (10, 20)]
+        else:
+            attacks["Thunderbolt"] = ["Strikes", 100, (40, 50)]
+
+        return attacks
+    
+    
+
+class Waterkeeper(Monster):
+    def __init__(self, name):
+        attacks = {}
+        attacks["water gun"] = ["shoots", 100, (5, 10)]
+        attacks["water beam"] = ["beems", 75, (10, 15)]
+        attacks["waterfall"] = ["floods", 33, (15, 20)]
+        attacks["heal"] = ["heals", 0, (0, 0)] 
+        super().__init__(name, random.randrange(1000, 1500), attacks, 70 + random.randrange(-10, 11))
+        self.consecutive_healing_turns = 0
+
+    def healing_action(self):
+        if self.hp < 0.2 * self.max_hp:
+            heal_amount = random.randint(10, 150)
+            self.take_healing(heal_amount)
+            self.consecutive_healing_turns += 1
+            return superclasses.CombatAction("heal", superclasses.Attack("heal", "heals", heal_amount, (0, 0), True), self)
+        else:
+            self.consecutive_healing_turns = 0  
+            return None  
+
+    def pickAction(self):
+        healing_action = self.healing_action()
+
+        if self.consecutive_healing_turns == 3:
+            damage_amount = 100
+            opponent = self.choose_opponent()
+            opponent.take_damage(damage_amount)
+            print(f"{self.name} dealt {damage_amount} damage to {opponent.name} due to it exploding.")
+
+            self.hp = 0
+            print(f"{self.name} who exploded is now dead.")
+            return None 
+
+        if healing_action:
+            return healing_action 
+        else:
+            attacks = self.getAttacks()
+            return random.choice(attacks) 
+
+    def choose_opponent(self):
+        return random.choice(config.the_player.get_pirates() + self.monsters)
