@@ -34,8 +34,6 @@ class Alex(location.Location):
     def enter(self, ship):
         #what pirates do when ship visits this loc on the map
         announce("You see some tridents and ruins on an island")
-        num_crewmates = len(Player.get_pirates())
-        announce(num_crewmates)
     #Boilerplate code for starting a visit.
     def visit(self):
         config.the_player.location = self.starting_location
@@ -101,7 +99,7 @@ class Ruins(location.SubLocation):
         if (verb == "west"):
             config.the_player.next_loc = self.main_location.locations["puzzle"]
         if(verb == "inspect"):
-            announce("You see strange writing on the side of a piller as well as hundreds of spears that seem to be burried and sticking out of the sand")
+            announce("You see strange writing on the side of a piller as well as hundreds of Tridents that seem to be burried and sticking out of the sand")
             res = input ("What would you like to inspect further\n:")
             if res == "writing":
                 announce("You look at the wall and read the following.\n'zhofrph wr wkh grpdlq ri wkh jrgv'\n'welcome to the domain of the gods'")
@@ -112,9 +110,12 @@ class Ruins(location.SubLocation):
                 pos = int(pos)
                 if type(pos) == int:
                     if pos == 373:
-                        config.the_player.add_to_inventory(Trident().as_list())
-                        self.item_in_sand = None
-                        announce('You pick up the rusty trident and it transforms into a sliver-blue Trident and rushes into your bag')
+                        if self.item_in_sand == None:
+                            announce('You already took it')
+                        else:
+                            config.the_player.add_to_inventory(Trident().as_list())
+                            self.item_in_sand = None
+                            announce('You pick up the rusty trident and it transforms into a sliver-blue Trident and rushes into your bag')
                     else:
                         announce('The weapons falls through you hand and reappears in the sand')
                 else:
@@ -177,15 +178,19 @@ class Puzzle(location.SubLocation):
                 announce("You look at the wall and read the following.\n"+ encrypted_message)
             elif res == "keyboard":
                 ans = input("Please answer the text\n:")
-                if ans == "sea" or ans == "ocean" or ans == "water":
-                    announce("correct\nkrrr krrr")
-                    i = self.item_in_computer
-                    announce("You take the "+i.name + " from the computer.")
-                    #config.the_player.add_to_inventory(i)
-                    config.the_player.add_to_inventory(Key3().as_list())
+                if ans == "sea" or ans == "ocean" or ans == "water" or ans == "Water" or ans == "Sea" or ans == "Ocean":
+                    if self.item_in_computer == None:
+                        announce('you already took it')
+                    else:
+                        announce("correct\nkrrr krrr")
+                        i = self.item_in_computer
+                        announce("You take the "+i.name + " from the computer.")
+                        #config.the_player.add_to_inventory(i)
+                        config.the_player.add_to_inventory(Key3().as_list())
 
-                    self.item_in_computer = None
-                    config.the_player.go = True
+                        self.item_in_computer = None
+                        config.the_player.go = True
+                else: announce("wrong")
             elif res == "pool":
                 announce("you see the water in the pool shoot out and fly through the air making many shapes and patterns")
             else:
@@ -200,7 +205,7 @@ class Puzzle2(location.SubLocation):
         self.verbs["east"] = self
         self.verbs["west"] = self
         self.verbs["inspect"] = self
-        
+        self.alreadypray = False
 
         #add some treasure!
         self.verbs["take"] = self
@@ -243,49 +248,61 @@ class Puzzle2(location.SubLocation):
             res = input ("what would you like to inspect further\n")
             if res == "building":
                 announce("You walk into the building and see some strange writing on the wall, a keyboard, and a pedestal with a hole in the middle of it")
-                ress = input("what would you like to inspect")
+                ress = input("what would you like to inspect\n")
                 if ress == "writing":
                     encrypted_message = self.caesar_cipher("What is my roman name", 3)
                     announce("you gaze upon the writing a see\n" + encrypted_message)
                 if ress == "pedestal":
                     announce("you look at the pedestal with a hole in the middle and you feel like something is supposed to go here")
-                    resss = input("what would you like to put in")
-                    if resss == "Trident":
+                    resss = input("what would you like to put in\n")
+                    if resss == "Trident" or resss == "trident":
                         has_tri = any(isinstance(item, Trident) for item in config.the_player.inventory)
                         if has_tri:
                             announce("you insert the trident into the hole and a secret room opens up")
-                            aa = input("would you like to enter")
+                            aa = input("would you like to enter\n")
                             if aa == "yes":
-                                announce("you anter the room and see a huge statue of a being the looks very strong")
-                                aaa = input("what would you like to inspect")
-                                if aaa == ("statue"):
+                                announce("you enter the room and see a huge statue of a being the looks very strong")
+                                aaa = input("what would you like to inspect\n")
+                                if aaa == ("statue") or aaa == ("Statue"):
                                     announce("you start to inspect the statue and get a strange urge to start to pray to the statue")
-                                    aaaa = input("would you like to pray")
+                                    aaaa = input("would you like to pray\n")
                                     if aaaa == "yes":
-                                        num_crewmates = len(player.get_pirates())
-                                        crewmates = [CrewMate() for _ in num_crewmates]
-                                        lowest_magic_crewmate = min(crewmates, key=lambda crewmate: crewmate.skills["magic"])
-                                        lowest_magic_crewmate.skills["magic"] = 100
-                                        announce(lowest_magic_crewmate.name + " now has magic skill 100")
+                                        if self.alreadypray == False:
+                                            crewmates = config.the_player.get_pirates()
+                                            lowest_magic_crewmate = min(crewmates, key=lambda crewmate: crewmate.skills["magic"])
+                                            lowest_magic_crewmate.skills["magic"] = 100
+                                            announce(lowest_magic_crewmate.name + " now has magic skill 100")
+                                            self.alreadypray = True
+                                        else:
+                                            announce("You pray")
                                         #make it so the part member with the lowest magic gets 100 magic
+                                    else: announce("You decide to leave the building")
+                                else: announce("You decide to leave the building")
+                            else: announce("You decide to leave the building")
+                        else: announce("You dont have that")
+                    else: announce("That doesnt fit and you leave the building")
+                
 
 
                 elif ress == "keyboard":
-                    announce("You walk around the back of the pillar only to find a keyboard")
+                    announce("You walk around to the keyboard")
                     ans = input("answer the question\n")
                     if ans == "neptune" or ans == 'Neptune':
-                        announce("correct\nkrrr krrr")
-                        i = self.item_in_computer
-                        announce("You take the "+ i.name + " from the computer.")
-                            #config.the_player.add_to_inventory(i)
-                        config.the_player.add_to_inventory(Key4().as_list())
+                        if self.item_in_computer == None:
+                            announce('you already took it')
+                        else:
+                            announce("correct\nkrrr krrr")
+                            i = self.item_in_computer
+                            announce("You take the "+ i.name + " from the computer.")
+                                #config.the_player.add_to_inventory(i)
+                            config.the_player.add_to_inventory(Key4().as_list())
 
-                        self.item_in_computer = None
-                        config.the_player.go = True
+                            self.item_in_computer = None
+                            config.the_player.go = True
                 else:
                     announce("That doesnt seem to be here, you exit the buiding")
             else:
-                announce("That doesnt seem to be here")
+                announce("That doesnt seem to be here, you leave the building")
     
     
         
@@ -385,14 +402,7 @@ class doorway(location.SubLocation):
                             announce("You continue lifting up each and every tile. You get tired once again with one left.")
                             s = input('Would you like to pick up the last tile?\n')
                             if s == 'yes':
-                                i = self.item_hidden
-                                announce("You see a glowing rod type weapon hidden under the tile.")
-                                ss = input('Would you like to take it?\n')
-                                if ss == 'yes':
-                                    announce("You take the "+i.name + " from under the tile.")
-                                    config.the_player.add_to_inventory(Zeus_bolt().as_list())
-                                else:
-                                    announce("The tiles magically fly back into place")
+                                announce("You found a hiden note saying '373'")
                             else:
                                 announce("The tiles magically fly back into place")
                         else:
@@ -442,18 +452,21 @@ class boss(location.SubLocation):
             announce("You see a giant boss carcass.")
             res = input ("What would you like to inspect further\n")
             if res == "boss":
-                announce("You walk up to the boss and rummage through his body only to find a box without a lid or hinge")
-                aa = input('would you like to take it\n')
-                if aa == 'yes':
-                    announce('You take the box from the boss carcass')
-                    config.the_player.add_to_inventory(Box().as_list())
-                    self.item_in_computer = None
-                    config.the_player.go = True
+                if self.item_in_boss == None:
+                    announce('you already took it')
                 else:
-                    announce('You try to walk away but the Box forcibly enters your bag')
-                    config.the_player.add_to_inventory(Box().as_list())
-                    self.item_in_computer = None
-                    config.the_player.go = True
+                    announce("You walk up to the boss and rummage through his body only to find a box without a lid or hinge")
+                    aa = input('would you like to take it\n')
+                    if aa == 'yes':
+                        announce('You take the box from the boss carcass')
+                        config.the_player.add_to_inventory(Box().as_list())
+                        self.item_in_boss = None
+                        config.the_player.go = True
+                    else:
+                        announce('You try to walk away but the Box forcibly enters your bag')
+                        config.the_player.add_to_inventory(Box().as_list())
+                        self.item_in_boss = None
+                        config.the_player.go = True
             else:
                 announce("That doesnt seem to be here")
 
@@ -462,7 +475,7 @@ class boss(location.SubLocation):
 class Trident(items.Item):
     def __init__(self):
         super().__init__("Trident", 99999)
-        self.damage = (15)
+        self.damage = (15,17)
         self.firearm = False
         self.skill = "magic"
         self.verb = "flood"

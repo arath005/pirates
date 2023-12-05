@@ -62,6 +62,10 @@ class CrewMate(Context, superclasses.CombatCritter):
 
     def get_health (self):
         return self.health
+    
+    def increase_skills(self, value):
+        for skill in self.skills:
+            self.skills[skill] += value
 
     def receive_medicine (self, num):
         '''Makes the pirate no longer sick (but doesn't remove sickness event)'''

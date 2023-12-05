@@ -7,4 +7,5 @@ __all__ = ["drowned_pirates",
 "seagull",
 "guardian",
 "Boss2",
-"Boss",]
+"Boss",
+"Boss3"]

@@ -2,6 +2,7 @@ from __future__ import annotations
 from game.display import announce
 from game.display import menu
 import random
+import game.config as config
 
 class Attack():
     """Basic attack object, with a name, description, chance of success, and damage range. Sufficient for specifying monster attacks."""
@@ -30,7 +31,34 @@ class Defend():
         if self.name == other.name and self.description == other.description:
             return True
         return False
+    
+class Heal():
+    
+    def __init__ (self, name, description):
+        self.name = name
+        self.description = description
 
+    def __eq__(self, other):
+        if not isinstance(other, Heal):
+            return False
+        if self.name == other.name and self.description == other.description:
+            return True
+        return False
+    
+class Explode():
+    
+    def __init__ (self, name, description):
+        self.name = name
+        self.description = description
+
+    def __eq__(self, other):
+        if not isinstance(other, Explode):
+            return False
+        if self.name == other.name and self.description == other.description:
+            return True
+        return False
+    
+    
 
 class ActionResolver():
     def pickTargets(self, action, attacker, allies, enemies):
@@ -55,6 +83,25 @@ class ActionResolver():
                     #Moving is defending chosen target. Moving is the defender and target is the defendee
                     moving.addDefendee(chosen_target)
                     chosen_target.addDefender(moving)
+        elif isinstance(chosen_attk, Heal):
+            #This is where the actually healing will happen, POSSIBLY by callin a function on chosen_attk
+            
+            amount = random.randint(10, 150)
+            moving.health += amount
+            if moving.health > moving.max_health:
+                moving.health = moving.max_health
+            print(f"{moving.name} healed for {amount} health.")
+        
+        elif isinstance(chosen_attk, Explode):
+            damage_amount = 200
+            opponent = random.choice(config.the_player.get_pirates())
+            opponent.inflict_damage(damage_amount, "got exploded", True)
+            print(f"{moving.name} dealt {damage_amount} damage to {opponent.name} due to it exploding.")
+            moving.health = 0
+            print(f"{moving.name} who exploded is now dead.")
+        
+        
+
         else:
             for chosen_target in chosen_targets:
                 if chosen_target != None:
@@ -78,7 +125,9 @@ class CombatCritter(ActionResolver):
         self.name = name
         self.lucky = False
         self.health = hp
+        self.max_health = hp
         self.speed = speed
+
 
         #List of defenders
         self.defenders = []

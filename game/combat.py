@@ -10,6 +10,8 @@ class Combat():
 
     def __init__ (self, monsters):
         self.monsters = monsters
+    def get_monsters(self):
+        return self.monsters
 
     def process_verb (self, verb, cmd_list, nouns):
         print (self.nouns + " can't " + verb)
@@ -54,6 +56,9 @@ class Combat():
             self.monsters = [m for m in self.monsters if m.health >0]
             config.the_player.cleanup_items()
 
+            for monster in self.monsters:
+                monster.display_health()
+
 
 class Monster(superclasses.CombatCritter):
     def __init__ (self, name: str, hp: int, attacks: dict[str, list], speed: float):
@@ -69,18 +74,18 @@ class Monster(superclasses.CombatCritter):
         return attacks
     
     def display_health(self):
-        print(f"{self.name}'s health: {self.hp}")
+        print(f"{self.name}'s health: {self.health}")
 
     def take_damage(self, damage):
         super().take_damage(damage)
         self.display_health()
 
-    def heal(self, amount):
-        self.hp += amount
-        if self.hp > self.max_hp:
-            self.hp = self.max_hp
-        print(f"{self.name} healed for {amount} health.")
-        self.display_health()
+    #def heal(self, amount):
+    #    self.health += amount
+    #    if self.health > self.max_health:
+    #        self.health = self.max_health
+    #    print(f"{self.name} healed for {amount} health.")
+    #    self.display_health()
 
 
     def pickAction(self):
@@ -106,27 +111,29 @@ class Drowned(Monster):
 class Guardian(Monster):
     def __init__ (self, name):
         attacks = {}
-        attacks["slap"] = ["slaps",75, (10,20)]
-        attacks["punch 1"] = ["punches",75, (10,20)]
-        attacks["punch 2"] = ["punches",75, (10,20)]
+        attacks["slap"] = ["slaps",75, (5,10)]
+        attacks["punch 1"] = ["punches",75, (5,10)]
+        attacks["punch 2"] = ["punches",75, (5,10)]
         #7 to 19 hp, bite attack, 65 to 85 speed (100 is "normal")
-        super().__init__(name, random.randrange(100,150), attacks, 65 + random.randrange(-10,11))
+        super().__init__(name, random.randrange(50,100), attacks, 65 + random.randrange(-10,11))
 class Keeper(Monster):
-    def __init__ (self, name):
-        attacks = self.choose_attacks()
-        super().__init__(name, random.randrange(250,350), attacks, 150 + random.randrange(-10,11))
-
-    def choose_attacks(self):
+    def __init__(self, name):
         attacks = {}
-        
-        if 300 >= self.hp:
-            attacks["static shock"] = ["shocks", 100, (5, 10)]
-        elif 75 <= self.hp < 300:
-            attacks["jab"] = ["jabs", 75, (10, 20)]
+        super().__init__(name, random.randrange(250, 350), attacks, 150 + random.randrange(-10, 11))
+
+    def getAttacks(self):
+        attacks = []
+
+        if self.health >= 300:
+            attacks.append(superclasses.CombatAction("static shock", superclasses.Attack("static shock", "shocks", 100, (5, 10), False), self))
+        elif self.health < 300 and self.health >= 75:
+            attacks.append(superclasses.CombatAction("jab", superclasses.Attack("jab", "jabs", 75, (10, 20), False), self))
         else:
-            attacks["Thunderbolt"] = ["Strikes", 100, (40, 50)]
+            attacks.append(superclasses.CombatAction("Thunderbolt", superclasses.Attack("Thunderbolt", "Strikes", 100, (40, 50), False), self))
 
         return attacks
+
+
     
     
 
@@ -140,28 +147,25 @@ class Waterkeeper(Monster):
         super().__init__(name, random.randrange(1000, 1500), attacks, 70 + random.randrange(-10, 11))
         self.consecutive_healing_turns = 0
 
+        
+
     def healing_action(self):
-        if self.hp < 0.2 * self.max_hp:
-            heal_amount = random.randint(10, 150)
-            self.take_healing(heal_amount)
+        if self.health < 0.2 * self.max_health:
             self.consecutive_healing_turns += 1
-            return superclasses.CombatAction("heal", superclasses.Attack("heal", "heals", heal_amount, (0, 0), True), self)
+            return superclasses.CombatAction("heal", superclasses.Heal("heal", "heals"), self)
         else:
             self.consecutive_healing_turns = 0  
+            #Can return none, but you have to notice it
             return None  
 
     def pickAction(self):
         healing_action = self.healing_action()
 
         if self.consecutive_healing_turns == 3:
-            damage_amount = 100
-            opponent = self.choose_opponent()
-            opponent.take_damage(damage_amount)
-            print(f"{self.name} dealt {damage_amount} damage to {opponent.name} due to it exploding.")
-
-            self.hp = 0
-            print(f"{self.name} who exploded is now dead.")
-            return None 
+            #Don't do an explosion like this, use an Attack() instead... or maybe a new action type called Explode()?
+            
+            #Don't reurn None from pickAction probably. This would instead be the Attack() or Explode() from above
+            return superclasses.CombatAction("explode", superclasses.Explode("explode", "explodes"), self)
 
         if healing_action:
             return healing_action 
@@ -169,5 +173,40 @@ class Waterkeeper(Monster):
             attacks = self.getAttacks()
             return random.choice(attacks) 
 
-    def choose_opponent(self):
-        return random.choice(config.the_player.get_pirates() + self.monsters)
+
+class Death(Monster):
+    def __init__(self, name):
+        attacks = {}
+        super().__init__(name, 50, attacks, 100 + random.randrange(-10, 11))
+        self.deathcount = 0
+    def getAttacks(self):
+        attacks = []
+
+        if self.health <= 75:
+            attacks.append(superclasses.CombatAction("Deathly Touch", superclasses.Attack("Deathly Touch", "Drains", 100, (1, 100), False), self))
+        
+
+        return attacks
+    
+    def inflict_damage (self, num, deathcause, combat = False):
+        self.health = self.health - num
+        if(self.health > 0):
+            self.health = self.max_health
+            return None
+        else:
+            if self.deathcount != 3:
+                self.deathcount += 1
+
+                announce("You have killed death " +str(self.deathcount)  + " times")
+                self.health = self.max_health
+                return None
+            
+            
+
+        for d in self.defendees:
+            d.removeDefender(self)
+        self.defendees = []
+        for d in self.defenders:
+            d.removeDefendee(self)
+        self.defenders = []
+        return self

@@ -8,7 +8,7 @@ from game.events import *
 from game.player import Player
 from game.combat import *
 from game.events import guardian
-from game.events import Boss
+from game.events import Boss3
 
 class Alex(location.Location):
     def __init__(self, x, y, world):
@@ -31,7 +31,7 @@ class Alex(location.Location):
 
     def enter(self, ship):
         #what pirates do when ship visits this loc on the map
-        announce("You see some ruins on an island")
+        announce("You see some ruins on an island in the shape of a skull")
         
 
     #Boilerplate code for starting a visit.
@@ -78,7 +78,7 @@ class Ruins(location.SubLocation):
 
 
     def enter(self):
-        announce ("You arrived at a set of ruins on an island. You anchor at the south bay")
+        announce ("You arrived at a set of ruins on an island that look like they are in the shape of a sckull. You anchor at the south bay")
 
     #one of the core functions
     #handles alot of shit
@@ -115,13 +115,14 @@ class Puzzle(location.SubLocation):
 
         #add some treasure!
         self.verbs["take"] = self
-        self.item_in_computer = Key1()
+        self.item_in_computer = Key5()
+        self.item_in_grave = Demonsword()
         self.event_chance = 30
         self.events.append(guardian.Guardian_attack())
         
 
     def enter (self):
-        announce("You walk into a small building")
+        announce("You walk into a graveyard")
     
     def caesar_cipher(self, text, shift):
         encrypted_text = ""
@@ -149,22 +150,46 @@ class Puzzle(location.SubLocation):
             announce("You run into a wall. You feel pretty stupid")
 
         if(verb == "inspect"):
-            announce("You see strange writing on the wall as well as a keyboard to the left of it")
+            announce("you see a graveyard that seems to go on forever with tombstones as well as a sign and a keyboard under it")
             res = input ("What would you like to inspect further\n:")
-            if res == "writing":
-                encrypted_message = self.caesar_cipher("what killed the cat", 3)
-                announce("You look at the wall and read the following.\n"+ encrypted_message)
+            if res == "graves" or res == "Tombstones" or res == "tombstones" or res == "Graves":
+                announce('you see hundreds of graves each with a different tombstone some more complex then others')
+                ress = input('Which grave would you like to visit\n')
+                if ress == "Persephone" or ress == "persephone":
+                    if self.item_in_grave == None:
+                        announce('there is nothing here')
+                    else:
+                        announce('you find a black and red sword stuck into this grave')
+                        resss = input('Would you like to take it\n')
+                        if resss == 'yes':
+                            e = self.item_in_grave
+                            announce("You take the "+e.name + " from the grave.")
+                            config.the_player.add_to_inventory(Demonsword().as_list())
+                            self.item_in_grave = None
+                            config.the_player.go = True
+                        else:
+                            e = self.item_in_grave
+                            announce("The "+ e.name + " flies out of the grave and into you bag")
+                            config.the_player.add_to_inventory(Demonsword().as_list())
+                            self.item_in_grave = None
+                            config.the_player.go = True
+                else:
+                    announce('You visit their grave and pay your respects')
+                
+            elif res == "sign":
+                encrypted_message = self.caesar_cipher("What realm do I rule over", 3)
+                announce("You look at the sign and read the following.\n"+ encrypted_message)
             elif res == "keyboard":
                 ans = input("Please answer the text\n:")
-                if ans == "curiosity" or ans == "Curiosity":
+                if ans == "Underworld" or ans == "underworld":
+                    announce("correct\nkrrr krrr")
                     if self.item_in_computer == None:
                         announce('you already took it')
                     else:
-                        announce("correct\nkrrr krrr")
                         i = self.item_in_computer
                         announce("You take the "+i.name + " from the computer.")
                         #config.the_player.add_to_inventory(i)
-                        config.the_player.add_to_inventory(Key1().as_list())
+                        config.the_player.add_to_inventory(Key5().as_list())
 
                         self.item_in_computer = None
                         config.the_player.go = True
@@ -213,13 +238,14 @@ class Puzzle2(location.SubLocation):
 
         #add some treasure!
         self.verbs["take"] = self
-        self.item_in_computer = Key2()
+        self.item_in_computer = Key6()
         self.event_chance = 30
         self.events.append(guardian.Guardian_attack())
         
 
     def enter (self):
-        announce("You walk through a huge tunnle coming out the other side")
+        announce("You walk across a bridge")
+
         
 
     def caesar_cipher(self, text, shift):
@@ -245,32 +271,25 @@ class Puzzle2(location.SubLocation):
             config.the_player.next_loc = self.main_location.locations["ruins"]
 
         if(verb in ["north", "south", "east"]):
-            announce("You walk for hours upon hours but cant seem to get more then 30 feet away from where you started")
+            announce("You try to move but the huge dog growls so you stay still")
 
         if(verb == "inspect"):
-            announce("you see a strange pillar in the middle of an open field with some strang writing on it")
+            announce("You find a three headed dog guarding a door")
             res = input ("what would you like to inspect further\n")
-            if res == "writing":
-                encrypted_message = self.caesar_cipher("curiosity is the downfall of mankind", 3)
-                announce("you gaze upon the pillar and see strange writings.\n" + encrypted_message)
-            elif res == "pillar":
-                announce("You walk around the back of the pillar only to find a keyboard")
-                ress = input('would you like to inspect the keyboard\n:')
-                if ress == 'yes':
-                    ans = input("true or false?\n beware the consequences if you choose incorrectly\n:")
-                    if ans == "True" or ans == 'true':
-                        if self.item_in_computer == None:
-                            announce('you already took it')
-                        else:
-                            announce("correct\nkrrr krrr")
-                            i = self.item_in_computer
-                            announce("You take the "+ "Key2" + " from the computer.")
-                            #config.the_player.add_to_inventory(i)
-                            config.the_player.add_to_inventory(Key2().as_list())
-
-                            self.item_in_computer = None
-                            config.the_player.go = True
-                
+            if res == "dog" or res == "Dog":
+                announce("You try to communicate with the dog and it asks you a question")
+                ress = input('What is my name\n')
+                if ress == "Cerberus" or ress == "cerberus":
+                    if self.item_in_computer == None:
+                        announce('you already took it')
+                    else:
+                        i = self.item_in_computer
+                        announce("Cerberus gives you "+ i.name)
+                        config.the_player.add_to_inventory(Key6().as_list())
+                        self.item_in_computer = None
+                        config.the_player.go = True
+                else:
+                    announce("wrong")
             else:
                 announce("That doesnt seem to be here")
     
@@ -280,27 +299,38 @@ class Puzzle2(location.SubLocation):
 
 
 
-class Box_lid(items.Item):
+class Hinges(items.Item):
     def __init__(self):
-        super().__init__("Box_lid", 1) #Note: price is in shillings (a silver coin, 20 per pound)
+        super().__init__("Hindges", 1) #Note: price is in shillings (a silver coin, 20 per pound)
 
     def as_list(self):
         return [self]
     
-class Key1(items.Item):
+class Key5(items.Item):
     def __init__(self):
-        super().__init__("Key1", 1) #Note: price is in shillings (a silver coin, 20 per pound)
+        super().__init__("Key5", 1) #Note: price is in shillings (a silver coin, 20 per pound)
 
     def as_list(self):
         return [self]
 
-class Key2(items.Item):
+class Key6(items.Item):
     def __init__(self):
-        super().__init__("Key2", 1) #Note: price is in shillings (a silver coin, 20 per pound)
+        super().__init__("Key6", 1) #Note: price is in shillings (a silver coin, 20 per pound)
 
     def as_list(self):
         return [self]
 
+class Demonsword(items.Item):
+    def __init__(self):
+        super().__init__("Demonsword", 99999)
+        self.damage = (99,101)
+        self.firearm = False
+        self.skill = "magic"
+        self.verb = "slash"
+        self.verb2 = "slashes"
+
+    def as_list(self):
+        return [self]
 
 
 class doorway(location.SubLocation):
@@ -316,7 +346,6 @@ class doorway(location.SubLocation):
 
         #add some treasure!
         self.verbs["take"] = self
-        self.item_hidden = Zeus_bolt()
         self.event_chance = 50
         self.events.append(guardian.Guardian_attack())
         
@@ -337,8 +366,8 @@ class doorway(location.SubLocation):
             res = input ("what would you like to inspect further\n")
             if res == "door":
                 announce("you walk up to the door and see 2 key holes.")
-                has_key1 = any(isinstance(item, Key1) for item in config.the_player.inventory)
-                has_key2 = any(isinstance(item, Key2) for item in config.the_player.inventory)
+                has_key1 = any(isinstance(item, Key5) for item in config.the_player.inventory)
+                has_key2 = any(isinstance(item, Key6) for item in config.the_player.inventory)
                 
                 if has_key1 and has_key2:
 
@@ -359,82 +388,12 @@ class doorway(location.SubLocation):
                 announce("You walk around every single column in there and find nothing")
                 
             elif res == "tiles":
-                announce("You start lifting up each and every tile. You get tired about a quarter of the way done.")
-                q = input('Would you like to stop?\n')
-                if q == 'no':
-                    announce("You continue lifting up each and every tile. You get tired again about half of the way done.")
-                    w = input('Would you like to stop?\n')
-                    if w == 'no':
-                        announce("You continue lifting up each and every tile. You get tired once again with about a quarter left.")
-                        r = input('Would you like to stop?\n')
-                        if r == 'no':
-                            announce("You continue lifting up each and every tile. You get tired once again with one left.")
-                            s = input('Would you like to pick up the last tile?\n')
-                            if s == 'yes':
-                                if self.item_hidden == None:
-                                    announce('there is nothing there')
-                                else:
-                                    i = self.item_hidden
-                                    announce("You see a glowing rod type weapon hidden under the tile.")
-                                    ss = input('Would you like to take it?\n')
-                                    if ss == 'yes':
-                                        announce("You take the "+i.name + " from under the tile.")
-                                        config.the_player.add_to_inventory(Zeus_bolt().as_list())
-                                        self.item_hidden = None
-                                    else:
-                                        announce("The tiles magically fly back into place")
-                            else:
-                                announce("The tiles magically fly back into place")
-                        else:
-                            announce("The tiles magically fly back into place")
-                    else:
-                        announce("The tiles magically fly back into place")
-                else:
-                    announce("The tiles magically fly back into place")
+                announce("The tiles are too heavy to be lifted")
             else:
                 announce("That doesnt seem to be here")
 
 
 
-class Zeus_bolt(items.Item):
-    def __init__(self, area_of_effect=2):
-        super().__init__("lightningbolt", 99999)
-        self.damage = (20, 30)
-        self.firearm = False
-        self.skill = "magic"
-        self.verb = "hit"
-        self.verb2 = "hits"
-        self.area_of_effect = area_of_effect
-
-    def pickTargets(self, action, attacker, allies, enemies):
-        print("Available targets:")
-        options = []
-        for i, t in enumerate(enemies):
-            options.append(f"{i + 1}. Attack {t.name}")
-            print(f"{i + 1}. {t.name}")
-
-        chosen_targets = None
-        while chosen_targets is None or len(chosen_targets) != 3:
-            try:
-                choice_input = input("Enter your choice(s): ")
-                chosen_targets = [int(index) - 1 for index in choice_input.split(",")]
-
-                if (
-                    any(index < 0 or index >= len(enemies) for index in chosen_targets)
-                    or len(chosen_targets) != 3
-                ):
-                    raise ValueError("Please select exactly 3 valid targets.")
-            except ValueError as e:
-                print(f"Error: {e}")
-                chosen_targets = None
-
-        selected_targets = [enemies[i] for i in chosen_targets]
-        return selected_targets
-
-    
-    
-    def as_list(self):
-        return [self]
 class boss(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
@@ -447,8 +406,8 @@ class boss(location.SubLocation):
         self.verbs["west"] = self
         self.verbs["inspect"] = self
         self.event_chance = 100
-        self.events.append(Boss.Boss_fight1())
-        self.item_in_boss = Box_lid()
+        self.events.append(Boss3.Boss_fight3())
+        self.item_in_boss = Hinges()
     
     def enter(self):
         announce ("You see a huge boss running at you")
@@ -471,23 +430,22 @@ class boss(location.SubLocation):
             res = input ("What would you like to inspect further\n")
             if res == "boss":
                 if self.item_in_boss == None:
-                    announce('There is nothing there')
+                    announce('you already took it')
                 else:
-                    announce("You walk up to the boss and rummage through his body only to find a box lid")
+                    announce("You walk up to the boss and rummage through his body only to find some hindges to a box")
                     aa = input('would you like to take it\n')
                     if aa == 'yes':
-                        announce('You take the box lid from the boss carcass')
-                        config.the_player.add_to_inventory(Box_lid().as_list())
+                        announce('You take the hindges from the boss carcass')
+                        config.the_player.add_to_inventory(Hinges().as_list())
                         self.item_in_boss = None
                         config.the_player.go = True
                     else:
-                        announce('You try to walk away but the lid forcibly enters your bag')
-                        config.the_player.add_to_inventory(Box_lid().as_list())
+                        announce('You try to walk away but the hindges forcibly enters your bag')
+                        config.the_player.add_to_inventory(Hinges().as_list())
                         self.item_in_boss = None
                         config.the_player.go = True
             else:
                 announce("That doesnt seem to be here")
-
 
 
 

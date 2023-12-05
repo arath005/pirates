@@ -12,6 +12,23 @@ import datetime
 import random
 from game.notebook import AlphabetNotebook
 
+class Pbox(items.Item):
+    def __init__(self):
+        super().__init__("Pbox", 1) #Note: price is in shillings (a silver coin, 20 per pound)
+
+    def get_name(self):
+        return self.name
+    
+    def use(self, user, target):
+        if isinstance(target, crewmate.CrewMate):
+            target.increase_skills(10)
+            announce(f"{target.get_name()}'s skills have increased by 10 thanks to the Pbox!")
+        else:
+            announce("Pbox can only be used on crewmates.")
+
+    def as_list(self):
+        return [self]
+    
 class Player (Context):
 
     def __init__ (self, world, ship):
@@ -61,6 +78,8 @@ class Player (Context):
         self.verbs['restock'] = self
         self.verbs['skills'] = self
         self.verbs['notebook'] = self
+        self.verbs['combine'] = self
+        self.verbs['use'] = self
 
         self.seen = []
         for i in range (0, self.world.worldsize):
@@ -90,6 +109,67 @@ class Player (Context):
                     s = f.read()
                 config.the_player = jsonpickle.decode (s)
                 self.go = True
+
+    def combine_items(self, cmd_list, nouns):
+        if len(cmd_list) < 4:
+            announce("Usage: combine [Hinges] [Box] [Box_lid]")
+            return
+
+        item_names = set(cmd_list[1:])
+        required_items = {"Hinges", "Box", "Box_lid"}
+
+        if not required_items.issubset(item_names):
+            announce("You must provide Hinges, Box, and Box_lid to combine.")
+            return
+
+        hinges = next((item for item in self.inventory if hasattr(item, 'get_name') and item.get_name() == "Hinges"), None)
+        box = next((item for item in self.inventory if hasattr(item, 'get_name') and item.get_name() == "Box"), None)
+        box_lid = next((item for item in self.inventory if hasattr(item, 'get_name') and item.get_name() == "Box_lid"), None)
+
+        if hinges is None or box is None or box_lid is None:
+            announce("One or more items not found in your inventory.")
+            return
+
+        combined_box = Pbox()
+
+        if hinges in self.inventory:
+            self.inventory.remove(hinges)
+        if box in self.inventory:
+            self.inventory.remove(box)
+        if box_lid in self.inventory:
+            self.inventory.remove(box_lid)
+
+        self.inventory.append(combined_box)
+        self.inventory.sort()
+
+        announce("You have successfully combined Hinges, Box, and Box_lid into Pbox!")
+
+
+    def use_item(self, item_name):
+        if item_name == "Pbox":
+            pbox = next((item for item in self.inventory if hasattr(item, 'get_name') and item.get_name() == "Pbox"), None)
+            if pbox:
+                for crewmate in self.get_pirates():
+                    for skill in crewmate.skills:
+                        crewmate.skills[skill] = min(100, crewmate.skills[skill] + 10)
+                announce("You used the Pbox! All crewmates' skills increased by 10.")
+                self.inventory.remove(pbox)
+            else:
+                announce("You don't have a Pbox in your inventory.")
+        else:
+            item = next((item for item in self.inventory if hasattr(item, 'get_name') and item.get_name() == item_name), None)
+            if item:
+                item.use(self)
+                announce("You used " + item_name + ".")
+                if item.is_consumable():
+                    self.inventory.remove(item)
+            else:
+                if item_name:
+                    announce("You don't have " + item_name + " in your inventory.")
+                else:
+                    announce("Please specify an item to use.")
+
+
 
     def Notebook(self):
         my_alphabet_notebook = AlphabetNotebook()
@@ -149,6 +229,11 @@ class Player (Context):
             sys.exit(0)
         elif (verb == "notebook"):
             self.Notebook()
+
+        elif verb == "use":
+            item_name = cmd_list[1] if len(cmd_list) > 1 else None
+            self.use_item(item_name)
+
         elif (verb == "map"):
             self.print_map ()
         elif (verb == "inventory"):
@@ -170,6 +255,9 @@ class Player (Context):
 
         elif (verb == "load"):
             self.load_game()
+        
+        elif verb == "combine":
+            self.combine_items(cmd_list, nouns)
 
         elif (verb == "status"):
             announce ("Day " + str(self.world.get_day()),pause=False)
